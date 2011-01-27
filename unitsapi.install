@@ -5,7 +5,7 @@
  */
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function unitsapi_install() {
   drupal_set_message(st('Units API has been installed successfully.'));

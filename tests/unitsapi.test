@@ -1,4 +1,5 @@
-<?php // $Id$
+<?php 
+// $Id$
 
 /**
  * @file
@@ -8,20 +9,7 @@
 /**
  * Functional tests for the Units API module.
  */
-class UnitsAPIUnitTest extends DrupalWebTestCase {
-
-  function getInfo() {
-    return array(
-      'name' => t('Units API functionality'),
-      'description' => t('Validate various unit conversions.'),
-      'group' => t('Units API'),
-    );
-  }
-
-  function setUp() {
-    parent::setUp('unitsapi', 'units');
-    unitsapi_xml_cache();
-  }
+class UnitsAPIWebTestCase extends DrupalWebTestCase {
 
   /**
    * Check to see if an unit conversion equals an expected value.
@@ -39,7 +27,7 @@ class UnitsAPIUnitTest extends DrupalWebTestCase {
    * @return
    *   The status passed in.
    */
-  protected function assertUnitConversion($value, $from, $to, $expected, $group = 'Other') {
+  function assertUnitConversion($value, $from, $to, $expected, $group = 'Other') {
     $test = unitsapi_convert($value, $from, $to, TRUE);
 
     $message = t('@value @from to @to = %expected @to (returned %result @to)', array(
@@ -51,6 +39,24 @@ class UnitsAPIUnitTest extends DrupalWebTestCase {
     ));
 
     return $this->assert($expected == $test['result'], $message, $group);
+  }
+}
+
+/**
+* Tests for the taxonomy vocabulary interface.
+*/
+class UnitsAPIFunctionalTest extends UnitsAPIWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Units API functionality',
+      'description' => 'Test core API functionality.',
+      'group' => 'Units API',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('unitsapi');
   }
 
   /**
@@ -72,12 +78,30 @@ class UnitsAPIUnitTest extends DrupalWebTestCase {
    * Tests compatibility with units.module
    */
   function testUnitsAPItoUnits() {
-    $this->assertEqual(count(units_get_units()), count(unitsapi_get_units()), t('Total count of units.module units equals total count of unitsapi units.'));
+    if (function_exists('units_get_units')) {
+      $this->assertEqual(count(units_get_units()), count(unitsapi_get_units()), t('Total count of units.module units equals total count of unitsapi units.'));
+    }
+  }
+}
+
+/**
+ * Tests various length unit conversions.
+ */
+class UnitsAPILengthConversionTest extends UnitsAPIWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Units API length conversions',
+      'description' => 'Test length conversions.',
+      'group' => 'Units API',
+    );
   }
 
-  /**
-   * Tests various length unit conversions.
-   */
+  function setUp() {
+    parent::setUp('unitsapi');
+    unitsapi_xml_cache();
+  }
+
   function testUnitsAPILength() {
     $group = t('Length');
     $this->assertUnitConversion(4000, 'millimeter', 'inch', 157.480315, $group);
@@ -91,10 +115,26 @@ class UnitsAPIUnitTest extends DrupalWebTestCase {
     $this->assertUnitConversion(10, 'mile', 'yard', 17600, $group);
     $this->assertUnitConversion(22, 'mile', 'kilometer', 35.405568, $group);
   }
+}
 
-  /**
-   * Tests various volume unit conversions.
-   */
+/**
+ * Tests various volume unit conversions.
+ */
+class UnitsAPIVolumeConversionTest extends UnitsAPIWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Volume conversions',
+      'description' => 'Test volume conversions.',
+      'group' => 'Units API',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('unitsapi');
+    unitsapi_xml_cache();
+  }
+
   function testUnitsAPIVolume() {
     $group = t('Volume');
     $this->assertUnitConversion(90, 'cubic inch', 'us liquid quart', 1.558441, $group);
@@ -109,10 +149,26 @@ class UnitsAPIUnitTest extends DrupalWebTestCase {
     $this->assertUnitConversion(12, 'us gallon', 'liter', 45.424944, $group);
     $this->assertUnitConversion(2, 'cubic foot', 'cup', 239.376689, $group);
   }
+}
 
-  /**
-   * Tests various weight unit conversions.
-   */
+/**
+ * Tests various weight unit conversions.
+ */
+class UnitsAPIWeightConversionTest extends UnitsAPIWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Weight conversions',
+      'description' => 'Test weight conversions.',
+      'group' => 'Units API',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('unitsapi');
+    unitsapi_xml_cache();
+  }
+
   function testUnitsAPIWeight() {
     $group = t('Weight');
     $this->assertUnitConversion(25, 'milligram', 'carat', 0.125, $group);
@@ -122,10 +178,26 @@ class UnitsAPIUnitTest extends DrupalWebTestCase {
     $this->assertUnitConversion(88, 'kilogram', 'short ton', 0.097003, $group);
     $this->assertUnitConversion(50, 'stone', 'pound', 699.999954, $group);
   }
+}
 
-  /**
-   * Tests various area unit conversions.
-   */
+/**
+ * Tests various area unit conversions.
+ */
+class UnitsAPIAreaConversionTest extends UnitsAPIWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Area conversions',
+      'description' => 'Test area conversions.',
+      'group' => 'Units API',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('unitsapi');
+    unitsapi_xml_cache();
+  }
+
   function testUnitsAPIArea() {
     $group = t('Area');
     $this->assertUnitConversion(197, 'square yard', 'acre', 0.040702, $group);
@@ -149,10 +221,26 @@ class UnitsAPIUnitTest extends DrupalWebTestCase {
     $this->assertUnitConversion(3, 'biswa I', 'acre', 23.999901, $group);
     $this->assertUnitConversion(2, 'biswa II', 'acre', 24.9999, $group);
   }
+}
 
-  /**
-   * Tests various pressure unit conversions.
-   */
+/**
+ * Tests various pressure unit conversions.
+ */
+class UnitsAPIPressureConversionTest extends UnitsAPIWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Pressure conversions',
+      'description' => 'Test pressure conversions.',
+      'group' => 'Units API',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('unitsapi');
+    unitsapi_xml_cache();
+  }
+
   function testUnitsAPIPressure() {
     $group = t('Pressure');
     $this->assertUnitConversion(5926, 'pascal', 'torr', 44.448645, $group);
@@ -160,10 +248,26 @@ class UnitsAPIUnitTest extends DrupalWebTestCase {
     $this->assertUnitConversion(865, 'torr', 'bar', 1.153239, $group);
     $this->assertUnitConversion(55, 'millibar', 'pascal', 5500, $group);
   }
-  
-  /**
-   * Tests various temperature unit conversions.
-   */
+}
+
+/**
+ * Tests various temperature unit conversions.
+ */
+class UnitsAPITemperatureConversionTest extends UnitsAPIWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Temperature conversions',
+      'description' => 'Test temperature conversions.',
+      'group' => 'Units API',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('unitsapi');
+    unitsapi_xml_cache();
+  }
+
   function testUnitsAPITemperature() {
     $group = t('Temperature');
     $this->assertUnitConversion(25, 'celsius', 'fahrenheit', 77, $group);
@@ -173,10 +277,26 @@ class UnitsAPIUnitTest extends DrupalWebTestCase {
     $this->assertUnitConversion(295, 'kelvin', 'celsius', 21.85, $group);
     $this->assertUnitConversion(300, 'kelvin', 'fahrenheit', 80.33, $group);
   }
+}
 
-  /**
-   * Tests various time unit conversions.
-   */
+/**
+ * Tests various time unit conversions.
+ */
+class UnitsAPITimeConversionTest extends UnitsAPIWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Time conversions',
+      'description' => 'Test time conversions.',
+      'group' => 'Units API',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('unitsapi');
+    unitsapi_xml_cache();
+  }
+
   function testUnitsAPITime() {
     $group = t('Time');
     $this->assertUnitConversion(50000, 'minute', 'year', 0.095129, $group);

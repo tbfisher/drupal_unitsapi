@@ -21,7 +21,7 @@ $result = unitsapi_convert(55, 'fahrenheit', 'kelvin');
 
 // Convert US liquid ounces to Imperial pints with a detailed array of the conversion
 $result = unitsapi_convert(50, 'us ounce', 'imperial pint', TRUE);
-// $result == Array ([result] => 2.602107, [from] => US ounces, [to] => Imperial pints)
+// $result == Array ([result] => 2.602107, [from][view] => US ounces, [to][view] => Imperial pints)
 
 SUPPORTED UNITS
 ------

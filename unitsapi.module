@@ -6,19 +6,19 @@
  */
 
 /**
- * Implementation of hook_help().
+ * Implements hook_help().
  */
 function unitsapi_help($path, $arg) {
   switch ($path) {
     case 'admin/help#unitsapi':
-      $output = '<p>'. t('To use the unitsapi_convert() function, you need the key of the to and from unit.  These keys are below.') .'</p>';
+      $output = '<p>' . t('To use the unitsapi_convert() function, you need the key of the to and from unit.  These keys are below.') . '</p>';
       $output .= _unitsapi_key_table();
       return $output;
   }
 }
 
 /**
- * Implementation of hook_define_units().
+ * Implements hook_define_units().
  *
  * Exposes all units defined in the units.xml to the units module.
  *
@@ -140,7 +140,7 @@ function unitsapi_get_units() {
  */
 function unitsapi_xml_cache() {
 
-  $file = drupal_get_path('module', 'unitsapi') .'/units.xml';
+  $file = drupal_get_path('module', 'unitsapi') . '/units.xml';
 
   // Load the XML file
   if (!function_exists('simplexml_load_file')) {
@@ -232,7 +232,7 @@ function _unitsapi_convert_temperature($value, $factor) {
     $return = FALSE;
   }
   else {
-    eval("\$return=". $equation .";");
+    eval("\$return=" . $equation . ";");
   }
   return $return;
 }
@@ -254,11 +254,12 @@ function _unitsapi_key_table() {
   );
 
   if (!empty($units) && is_array($units)) {
+    $curr_kind = '';
     foreach ($units as $key => $unit) {
       if ($curr_kind != $unit['kind']) {
         $curr_kind = $unit['kind'];
         $row = array(
-          'data' => array(array('data' => '<strong>'. drupal_ucfirst(t($curr_kind)) .'</strong>', 'colspan' => 4)),
+          'data' => array(array('data' => '<strong>' . drupal_ucfirst(t($curr_kind)) . '</strong>', 'colspan' => 4)),
         );
         $rows[] = $row;
       }
@@ -288,7 +289,8 @@ function _unitsapi_key_table() {
 
     }
   }
-  return theme('table', $header, $rows);
+
+  return theme('table', array('header' => $header, 'rows' => $rows, 'empty' => t('No units available.'), 'attributes' => array('id' => 'unitsapi-keys')));
 }
 
 /**

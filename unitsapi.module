@@ -34,6 +34,7 @@ function unitsapi_define_units() {
     foreach ($units as $unit_name => $unit) {
       $key = str_replace(' ', '_', $unit['kind'] . '_' . $unit_name);
       $converted_units[$key] = array(
+        'key'   => $unit_name,
         'shortname'   => $unit['symbol'],
         'fullname'    => t($unit['singular']),
         'symbol'      => $unit['symbol'],

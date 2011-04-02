@@ -1,0 +1,240 @@
+<?php 
+
+/**
+ * @file
+ * Provides formatters to output converted values from CCK Number fields 
+ * and Measured Value Fields.
+ */
+
+/**
+ * Implementation of hook_theme().
+ */
+function unitsapi_formatters_theme() {
+  $themes = array();
+  $default_formats = _unitsapi_formatters_default_formats();
+  $units = unitsapi_get_units();
+
+  if (is_array($units)) {
+    foreach ($units as $unit_key => $unit) {
+      foreach ($default_formats as $default_key => $default_format) {
+        $key = _unitsapi_formatters_slug_encode(array('default_key' => $default_key, 'unit_key' => $unit_key));
+        $themes['unitsapi_formatters_formatter_' . $key] = array(
+          'arguments' => array('element' => NULL),
+          'function' => 'theme_unitsapi_formatters_formatter_generic',
+        );
+      }
+    }
+  }
+  $themes['unitsapi_formatters_mvf'] = array('arguments' => array('element' => NULL, 'format' => NULL));
+  return $themes;
+}
+
+/**
+ * Implementation of hook_widget_settings_alter().
+ */
+function unitsapi_formatters_widget_settings_alter(&$settings, $op, $widget) {
+  /* Number widgets need a "from" unit type */
+  $widget_types = array('number');
+  if ((!empty($widget['type']) && in_array($widget['type'], $widget_types)) || (!empty($widget['widget_type']) && in_array($widget['widget_type'], $widget_types))) {
+    switch ($op) {
+      case 'form':
+        $units = unitsapi_get_units();
+        $options = array('' => t('No unit conversion'));
+
+        if (is_array($units)) {
+          foreach ($units as $unit_key => $unit) {
+            $options[$unit_key] = $unit['plural'];
+          }
+        }
+        $settings['unitsapi_widget_unit'] = array(
+          '#type' => 'select',
+          '#title' => t('Unit type'),
+          '#description' => t('If the display setting for this field is a unit conversion, select the "from" unit here.  For example, pick "feet" here if you plan on converting the value to yards via the display settings.'),
+          '#options' => $options,
+          '#default_value' => $widget['unitsapi_widget_unit'] ? $widget['unitsapi_widget_unit'] : '',
+          '#weight' => 10,
+        );
+        break;
+      case 'save':
+        $settings += array('unitsapi_widget_unit');
+        break;
+    }
+  }
+}
+
+/**
+ * Implementation of hook_field_formatter_info().
+ */
+function unitsapi_formatters_field_formatter_info() {
+  $formats = array();
+  $default_formats = _unitsapi_formatters_default_formats();
+  $units = unitsapi_get_units();
+
+  if (is_array($units)) {
+    foreach ($units as $unit_key => $unit) {
+      foreach ($default_formats as $default_key => $default_format) {
+        $new_format = $default_format;
+        $key = _unitsapi_formatters_slug_encode(array('default_key' => $default_key, 'unit_key' => $unit_key));
+        $new_format['label'] = $unit['plural'] . ' (' . $default_format['label'] . ')';
+        $formats[$key] = $new_format;
+      }
+    }
+  }
+  return $formats;
+}
+
+/**
+ * Proxy theme function for unitsapi field formatters.
+ *
+ * @return
+ *   Themed CCK/MVF output, or an empty string.
+ */
+function theme_unitsapi_formatters_formatter_generic($element) {
+  $field = content_fields($element['#field_name'], $element['#type_name']);
+  $widget = $field['widget'];
+  $format = _unitsapi_formatters_slug_decode($element['#formatter']);
+
+  /* If this is a MVF, convert before calling that module's theme functions. */
+  if ($widget['type'] == 'mvf_widget') {
+    return theme('unitsapi_formatters_mvf', $element, $format);
+  }
+
+  $units = unitsapi_get_units();
+  $value = isset($element['#item']['value']) ? $element['#item']['value'] : NULL;
+  $value2 = isset($element['#item']['value2']) ? $element['#item']['value2'] : NULL;
+
+  /* Return empty if the units do not exist */
+  if (!array_key_exists($widget['unitsapi_widget_unit'], $units) || !array_key_exists($format['unit_key'], $units)) {
+    return '';
+  }
+
+  /* Respect allowed values, and only convert after the allowance is granted */
+  if (($allowed_values = content_allowed_values($field))) {
+    if (isset($allowed_values[$value]) && $allowed_values[$value] != $value) {
+      return unitsapi_convert($allowed_values[$value], $widget['unitsapi_widget_unit'], $format['unit_key']);
+    }
+  }
+
+  if (empty($value) && $value !== '0') {
+    return '';
+  }
+
+  $value = unitsapi_convert($value, $widget['unitsapi_widget_unit'], $format['unit_key']);
+
+  switch ($format['default_key']) {
+    case 'us_0':
+      $output = number_format($value, 0, '.', ',');
+      break;
+    case 'us_1':
+      $output = number_format($value, 1, '.', ',');
+      break;
+    case 'us_2':
+      $output = number_format($value, 2, '.', ',');
+      break;
+    case 'be_0':
+      $output = number_format($value, 0, ',', '.');
+      break;
+    case 'be_1':
+      $output = number_format($value, 1, ',', '.');
+      break;
+    case 'be_2':
+      $output = number_format($value, 2, ',', '.');
+      break;
+    case 'fr_0':
+      $output = number_format($value, 0, ', ', ' ');
+      break;
+    case 'fr_1':
+      $output = number_format($value, 1, ', ', ' ');
+      break;
+    case 'fr_2':
+      $output = number_format($value, 2, ', ', ' ');
+      break;
+    default:
+      $output = $value;
+      break;
+  }
+
+  $prefixes = isset($field['prefix']) ? array_map('content_filter_xss', explode('|', $field['prefix'])) : array('');
+  $suffixes = isset($field['suffix']) ? array_map('content_filter_xss', explode('|', $field['suffix'])) : array('');
+  $prefix = (count($prefixes) > 1) ? format_plural($value, $prefixes[0], $prefixes[1]) : $prefixes[0];
+  $suffix = (count($suffixes) > 1) ? format_plural($value, $suffixes[0], $suffixes[1]) : $suffixes[0];
+
+  return $prefix . $output . $suffix;
+}
+
+/**
+ * Theme function to output MVF themed fields after a conversion.
+ *
+ * @return
+ *   Themed MVF output, or an empty string.
+ */
+function theme_unitsapi_formatters_mvf($element, $format) {
+  if (module_exists('mvf')) {
+    /* Unit key from MVF is formatted as kind_unit.  Use the hook_define_units() array to load the unit data. */
+    $mvf_units = unitsapi_define_units();
+    $units = unitsapi_get_units();
+    $unit = $element['#item']['unit'];
+
+    if (array_key_exists($unit, $mvf_units)) {
+      /* The $from array is the same data as the Units API data, just from hook_define_units() */
+      $from = $mvf_units[$unit];
+
+      /* Remove the extra key added in _unitsapi_default_formats() */
+      $formatter = str_replace('mvf_', '', $format['default_key']);
+      $theme = 'mvf_formatter_' . $formatter;
+
+      /* Override $element values before passing to MVF theme functions */
+      $element['#item']['value'] = $element['#item']['value'] ? unitsapi_convert($element['#item']['value'], $from['key'], $format['unit_key']) : $element['#item']['value'];        
+      $element['#item']['value2'] = $element['#item']['value2'] ? unitsapi_convert($element['#item']['value2'], $from['key'], $format['unit_key']) : $element['#item']['value2'];        
+      $element['#item']['unit'] = str_replace(' ', '_', $units[$format['unit_key']]['kind'] . '_' . $format['unit_key']);
+      $element['#formatter'] = $formatter;
+      return theme($theme, $element);
+    }
+  }
+  return '';
+}
+
+/**
+ * Helper function to create a slug.
+ *
+ * @return
+ *   A slug string.
+ */
+function _unitsapi_formatters_slug_encode($data) {
+  return serialize($data);
+}
+
+/**
+ * Helper function to decode a slug.
+ *
+ * @return
+ *   An array of data.
+ */
+function _unitsapi_formatters_slug_decode($slug) {
+  return unserialize($slug);
+}
+
+/**
+ * Helper function to generate an array of default formats, based 
+ * on number.module and mvf.module
+ *
+ * @return
+ *   An array for formatter data.
+ */
+function _unitsapi_formatters_default_formats() {
+  $default_formats = array(
+    'default' => array('label' => '9999',            'multiple values' => CONTENT_HANDLE_CORE, 'field types' => array('number_integer', 'number_decimal', 'number_float')),
+    'us_0'    => array('label' => '9,999',           'multiple values' => CONTENT_HANDLE_CORE, 'field types' => array('number_integer', 'number_decimal', 'number_float')),
+    'us_1'    => array('label' => '9,999.9',         'multiple values' => CONTENT_HANDLE_CORE, 'field types' => array('number_decimal', 'number_float')),
+    'us_2'    => array('label' => '9,999.99',        'multiple values' => CONTENT_HANDLE_CORE, 'field types' => array('number_decimal', 'number_float')),
+    'be_0'    => array('label' => '9.999',           'multiple values' => CONTENT_HANDLE_CORE, 'field types' => array('number_integer', 'number_decimal', 'number_float')),
+    'be_1'    => array('label' => '9.999,9',         'multiple values' => CONTENT_HANDLE_CORE, 'field types' => array('number_decimal', 'number_float')),
+    'be_2'    => array('label' => '9.999,99',        'multiple values' => CONTENT_HANDLE_CORE, 'field types' => array('number_decimal', 'number_float')),
+    'fr_0'    => array('label' => '9 999',           'multiple values' => CONTENT_HANDLE_CORE, 'field types' => array('number_integer', 'number_decimal', 'number_float')),
+    'fr_1'    => array('label' => '9 999, 9',        'multiple values' => CONTENT_HANDLE_CORE, 'field types' => array('number_decimal', 'number_float')),
+    'fr_2'    => array('label' => '9 999, 99',       'multiple values' => CONTENT_HANDLE_CORE, 'field types' => array('number_decimal', 'number_float')),
+    'mvf_default' => array('label' => t('Default'), 'field types' => array('mvf')),
+    'mvf_nozeros' => array('label' => t('Remove redundant zeros'), 'field types' => array('mvf')),
+  );
+  return $default_formats;
+}

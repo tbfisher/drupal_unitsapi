@@ -1,0 +1,13 @@
+<?php 
+
+/**
+ * @file
+ * Contains install and update functions for Units API Formatters.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function unitsapi_formatters_install() {
+  drupal_set_message(st('Units API Formatters has been installed successfully.'));
+}

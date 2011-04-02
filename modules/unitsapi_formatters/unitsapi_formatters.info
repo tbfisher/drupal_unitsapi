@@ -1,0 +1,5 @@
+name = Units API Field Formatters
+description = Provides formatters to output converted values from CCK Number fields and Measured Value Fields.
+dependencies[] = unitsapi
+package = Units
+core = 6.x

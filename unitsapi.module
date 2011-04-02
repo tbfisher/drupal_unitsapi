@@ -103,6 +103,7 @@ function unitsapi_convert($value, $from, $to, $details = FALSE) {
     'result' => $result,
     'from' => $units[$from],
     'to' => $units[$to],
+    'arguments' => array_slice(func_get_args(), 4),
   );
 
   // Add the plural forms for easy access

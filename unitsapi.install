@@ -1,4 +1,4 @@
-<?php // $Id$
+<?php
 /**
  * @file
  * Contains install and update functions for Units API.

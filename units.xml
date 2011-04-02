@@ -527,6 +527,14 @@
 			<source>http://physics.nist.gov/Pubs/SP811/contents.html</source>
 		</unit>
 		<unit>
+			<key>kilopascal</key>
+			<singular>kilopascal</singular>
+			<plural>kilopascals</plural>
+			<symbol>kPa</symbol>
+			<factor>1000</factor>
+			<source>http://physics.nist.gov/Pubs/SP811/contents.html</source>
+		</unit>
+		<unit>
 			<key>torr</key>
 			<singular>torr</singular>
 			<plural>torr</plural>

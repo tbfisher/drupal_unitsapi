@@ -1,4 +1,4 @@
-<?php // $Id$
+<?php
 
 /**
  * @file
@@ -160,7 +160,7 @@ class UnitsAPIUnitTest extends DrupalWebTestCase {
     $this->assertUnitConversion(865, 'torr', 'bar', 1.153239, $group);
     $this->assertUnitConversion(55, 'millibar', 'pascal', 5500, $group);
   }
-  
+
   /**
    * Tests various temperature unit conversions.
    */
@@ -183,5 +183,134 @@ class UnitsAPIUnitTest extends DrupalWebTestCase {
     $this->assertUnitConversion(82, 'hour', 'day', 3.416667, $group);
     $this->assertUnitConversion(3.5, 'day', 'minute', 5040, $group);
     $this->assertUnitConversion(20, 'year', 'hour', 175200, $group);
+  }
+}
+
+class UnitsAPIFormattersTest extends ContentCrudTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Conversion formatters'),
+      'description' => t('Tests the Units API Formatters.'),
+      'group' => t('Units API'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('unitsapi', 'unitsapi_formatters', 'content', 'number', 'units', 'formatted_number', 'format_number', 'mvf');
+    $this->loginWithPermissions();
+    $this->acquireContentTypes(1);
+  }
+
+  /**
+   * Test CCK number field conversion on output.
+   */
+  public function testFormattersFunctional() {
+    $type = $this->content_types[0];
+    $type_url = str_replace('_', '-', $type->type);
+
+    $settings = array(
+      array(
+        'default_key' => 'default',
+        'from_unit' => 'mile',
+        'from' => 5,
+        'to_unit' => 'foot',
+        'to' => '26400',
+      ),
+      array(
+        'default_key' => 'us_0',
+        'from_unit' => 'mile',
+        'from' => 5,
+        'to_unit' => 'foot',
+        'to' => '26,400',
+      ),
+    );
+
+    foreach ($settings as $setting) {
+      $format = _unitsapi_formatters_slug_encode(array('default_key' => $setting['default_key'], 'unit_key' => $setting['to_unit']));
+
+      $field = $this->createField(array(
+        'type' => 'number_decimal', 
+        'widget_type' => 'number', 
+        'precision' => '10', 
+        'unitsapi_widget_unit' => $setting['from_unit'],
+        'display_settings' => array(
+          'full' => array('format' => $format),
+        ),
+      ), 0);
+      $field_name = $field['field_name'];
+
+      $edit = array(
+        'title' => $this->randomName(20),
+        'body' => $this->randomName(20),
+        $field_name.'[0][value]' => 5,
+      );
+      $this->drupalPost('node/add/'. $type_url, $edit, 'Save');
+      $node = node_load(array('title' => $edit['title']));
+      $this->assertEqual($node->{$field_name}[0]['value'], $setting['from'], 'Measurement saved without conversion.');
+      $this->drupalGet('node/'. $node->nid);
+      $this->assertText($setting['to'], 'Measurement converted on output.');
+      $this->deleteField(0);
+    }
+  }
+
+  /**
+   * Test MVF field conversion on output.
+   */
+  public function testMVFFormattersFunctional() {
+    $type = $this->content_types[0];
+    $type_url = str_replace('_', '-', $type->type);
+
+    $settings = array(
+      array(
+        'default_key' => 'mvf_default',
+        'from_unit' => 'length_mile',
+        'from' => '5.00',
+        'to_unit' => 'foot',
+        'to' => '26,400.00',
+      ), 
+      array(
+        'default_key' => 'mvf_nozeros',
+        'from_unit' => 'length_mile',
+        'from' => '5.00',
+        'to_unit' => 'foot',
+        'to' => '26,400',
+      ), 
+    );
+
+    foreach ($settings as $setting) {
+      $format = _unitsapi_formatters_slug_encode(array('default_key' => $setting['default_key'], 'unit_key' => $setting['to_unit']));
+      variable_set('units_enabled_units', array($setting['from_unit'], $setting['to_unit']));
+
+      $field = $this->createField(array(
+        'type' => 'mvf', 
+        'widget_type' => 'mvf_widget', 
+        'precision' => '10', 
+        'tovalue' => '',
+        'unit_select_mode' => 'short',
+        'unit_display_mode_single' => 'f|+|u',
+        'unit_display_mode_range' => 'f|-|t|+|u',
+        'decimals_display_mode' => 'field',
+        'decimals' => '2',
+        'allowed_units' => array($setting['from_unit'] => TRUE),
+        'display_settings' => array(
+          'full' => array('format' => $format),
+        ),
+      ), 0);
+      $field_name = $field['field_name'];
+
+      $edit = array(
+        'title' => $this->randomName(20),
+        'body' => $this->randomName(20),
+        $field_name . '[0][value]' => $setting['from'],
+        $field_name. '[0][unit]' => $setting['from_unit'],
+      );
+      $this->drupalPost('node/add/'. $type_url, $edit, 'Save');
+      $node = node_load(array('title' => $edit['title']));
+      $this->assertEqual($node->{$field_name}[0]['value'], $setting['from'], 'MVF measurement saved without conversion.');
+      $this->verbose('<h3>Saved node</h3><pre>' . var_export($node, TRUE) . '</pre>');
+      $this->drupalGet('node/'. $node->nid);
+      $this->assertText($setting['to'], 'MVF measurement converted on output.');
+      $this->deleteField(0);
+    }
   }
 }

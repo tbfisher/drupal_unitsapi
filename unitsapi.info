@@ -1,3 +1,4 @@
 name = Units API
 description = Contains several API calls for converting distance, mass, and other units.
+package = Units
 core = 6.x

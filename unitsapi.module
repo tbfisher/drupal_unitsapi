@@ -89,15 +89,22 @@ function unitsapi_convert($value, $from, $to, $details = FALSE) {
         $result = _unitsapi_convert_temperature($value, $units[$to]['factor'][$from]);
       break;
     default:
-      $from_si = $units[$from]['factor'];
-      $to_si = $units[$to]['factor'];
-      $from_convert = $value * $from_si;
-      $result = $from_convert / $to_si;
+      if  (is_numeric($units[$from]['factor']) && is_numeric($units[$to]['factor'])) {
+        $from_si = $units[$from]['factor'];
+        $to_si = $units[$to]['factor'];
+        $from_convert = $value * $from_si;
+        $result = $from_convert / $to_si;
+      }
+      else {
+        $result = NULL;
+      }
   }
 
   // Round to the 6 spaces after the decimal.
-  $result = round($result, 6);
-
+  if (!empty($result)) {
+    $result = round($result, 6);
+  }
+  
   $result_array = array(
     'value' => $value,
     'result' => $result,

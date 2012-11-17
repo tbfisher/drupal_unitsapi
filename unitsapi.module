@@ -88,8 +88,8 @@ function unitsapi_convert($value, $from, $to, $details = FALSE) {
         $result = _unitsapi_convert_temperature($value, $units[$to]['factor'][$from]);
       break;
     default:
-      $from_si = $units[$from]['factor'];
-      $to_si = $units[$to]['factor'];
+      $from_si = $units[$from]['factor']['default'];
+      $to_si = $units[$to]['factor']['default'];
       $from_convert = $value * $from_si;
       $result = $from_convert / $to_si;
   }
@@ -162,19 +162,10 @@ function unitsapi_xml_cache() {
     foreach ($units->unit as $unit) {
 
       $unitarray = (array) $unit;
-
-      // If this unit has multiple factors, set them in $unitsarray according to their kind
-      if (isset($unit->factors)) {
-        unset($unitarray['factors']);
-        foreach ($unit->factors->factor as $factor) {
-          $factor = (array) $factor;
-
-          switch ($kind) {
-            case 'temperature':
-                $unitarray['factor'][$factor['@attributes']['from']] = $factor[0];
-              break;
-          }
-        }
+      unset($unitarray['factors']);
+      foreach ($unit->factors->factor as $factor) {
+        $factor = (array) $factor;
+        $unitarray['factor'][$factor['@attributes']['from']] = $factor[0];
       }
 
       $units_cache[$unitarray['key']] = array(
@@ -264,7 +255,7 @@ function _unitsapi_key_table() {
         $rows[] = $row;
       }
 
-      if ($curr_kind == 'temperature') {
+      if (count($unit['factor']) > 1) {
         $output_factor = '';
 
         foreach ($unit['factor'] as $factor_key => $factor) {
@@ -281,7 +272,7 @@ function _unitsapi_key_table() {
         $row = array(
           check_plain($key),
           t('@singular (@symbol)', array('@singular' => $unit['singular'], '@symbol' => $unit['symbol'])),
-          l($unit['factor'], $unit['source']),
+          l(current($unit['factor']), $unit['source']),
         );
       }
 

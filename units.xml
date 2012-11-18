@@ -168,6 +168,16 @@
       <source>http://physics.nist.gov/Pubs/SP811/contents.html</source>
     </unit>
     <unit>
+      <key>milliliter</key>
+      <singular>milliliter</singular>
+      <plural>milliliters</plural>
+      <symbol>mL</symbol>
+      <factors>
+        <factor from="default">0.000001</factor>
+      </factors>
+      <source>http://physics.nist.gov/Pubs/SP811/contents.html</source>
+    </unit>
+    <unit>
       <key>liter</key>
       <singular>liter</singular>
       <plural>liters</plural>

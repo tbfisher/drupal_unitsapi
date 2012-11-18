@@ -144,6 +144,7 @@ class UnitsAPIVolumeConversionTest extends UnitsAPIWebTestCase {
     $this->assertUnitConversion(70, 'us dry quart', 'imperial gallon', 16.956433, $group);
     $this->assertUnitConversion(55, 'tablespoon', 'cubic inch', 49.628902, $group);
     $this->assertUnitConversion(120, 'teaspoon', 'cup', 2.500001, $group);
+    $this->assertUnitConversion(3, 'cup', 'milliliter', 709.7646, $group);
     $this->assertUnitConversion(2, 'liter', 'imperial fluid ounce', 70.390166, $group);
     $this->assertUnitConversion(12, 'us gallon', 'liter', 45.424944, $group);
     $this->assertUnitConversion(2, 'cubic foot', 'cup', 239.376689, $group);

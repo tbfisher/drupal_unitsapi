@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 /**
  * @file
@@ -42,8 +42,8 @@ class UnitsAPIWebTestCase extends DrupalWebTestCase {
 }
 
 /**
-* Tests for the taxonomy vocabulary interface.
-*/
+ * Tests for functional/integration points.
+ */
 class UnitsAPIFunctionalTest extends UnitsAPIWebTestCase {
 
   public static function getInfo() {

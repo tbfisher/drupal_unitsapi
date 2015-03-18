@@ -1,5 +1,0 @@
-name = Units API
-description = Contains several API calls for converting distance, mass, and other units.
-core = 7.x
-files[] = unitsapi.module
-files[] = unitsapi.test

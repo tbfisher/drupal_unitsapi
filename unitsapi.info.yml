@@ -1,0 +1,6 @@
+name: Units API
+type: module
+description: "API module for converting distance, mass, and other units."
+core: 8.x
+package: Other
+

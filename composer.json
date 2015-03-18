@@ -1,0 +1,10 @@
+{
+    "name": "drupal/unitsapi",
+    "type": "drupal-module",
+    "description": "API module for converting distance, mass, and other units.",
+    "homepage": "http://drupal.org/project/unitsapi",
+    "license": "GPL-2.0+",
+    "require": {
+        "triplepoint/php-units-of-measure": "2.*"
+    }
+}
